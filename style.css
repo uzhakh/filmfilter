@@ -73,8 +73,8 @@ button:hover {
 
 a,
 button {
-  color: black; /* Убирает синий цвет для ссылок и кнопок */
-  text-decoration: none; /* Убирает подчеркивание, если оно есть */
+  color: black;
+  text-decoration: none;
 }
 #enter-btn {
   background-color: #83b482;
