@@ -1,3 +1,4 @@
+import { loadFilms } from './api.js';
 
 let list = document.getElementById('film-list');
 let button = document.getElementById('enter-btn');
@@ -7,6 +8,9 @@ let input = document.getElementById('rating-input');
 let noResults = document.getElementById('not-results');
 let bestMovies = document.getElementById('filter-btn');
 let films; 
+let maxRating;
+let minRating;
+// let apiKey = '${window.API_KEY}';
 
 function setList(data) { 
    list.innerHTML= '';
@@ -18,37 +22,42 @@ function setList(data) {
       list.appendChild(li); 
      });
 
-     //Сбрасываем и запускаем анимацию
-     list.style.animation = 'none';
-     setTimeout(() => {
-      list.style.animation = 'fadeIn 1s ease-in';
-     }, 10);
-     input.value = '';
+   //Сбрасываем и запускаем анимацию
+   list.style.animation = 'none';
+   setTimeout(() => {
+   list.style.animation = 'fadeIn 1s ease-in';
+   noResults.style.animation = 'fadeIn 1s ease-in';
+   }, 5);
+   input.value = '';
+
    }
 
    noResults.textContent = 'Loading...';
    noResults.style.display = 'block';
-
-   fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${window.API_KEY}`)
-   .then((response) => response.json())
-   .then((data) => {
-      films = data.results;
-      setList(films);
-   })
-   .catch((error) => {
+   loadFilms(window.API_KEY).then((data) => {
+     films = data;
+     maxRating = Math.max(...films.map(film => film.vote_average));
+     minRating = Math.min(...films.map(film => film.vote_average));
+     setList(films);
+   }) .catch((error) => {
       console.log('Error loading:', error);
-      noResults.style.display = 'block'; // Показываем ошибку
-    list.style.display = 'none';
+      noResults.textContent = 'Error loading movies';
+      noResults.style.display = 'block';
+      list.style.display = 'none';
+      
    })
 
    button.addEventListener('click', () => {
-      const minRating = Number(input.value);
+      const numRating = Number(input.value);
       if (!films) return;
       if (input.value === '') {
          setList(films);
-      } else if (minRating > 0 && minRating <=10) {
-         const filmsFilt = films.filter(i => i.vote_average >= minRating);
+      } else if (numRating >= minRating && numRating <= maxRating) {
+         const filmsFilt = films.filter(i => i.vote_average >= numRating);
+         console.log('Input:', numRating);
+    console.log('Filtered:', filmsFilt.map(f => f.vote_average));
          if(filmsFilt.length === 0) {
+            noResults.textContent = 'Nothing found';
             noResults.style.display = 'block';
             list.style.display = 'none';
             input.value = '';
@@ -56,11 +65,13 @@ function setList(data) {
             setList(filmsFilt);
          }
       } else {
+         noResults.textContent = `Please enter a rating between ${minRating} and ${maxRating}`;
          noResults.style.display = 'block';
          list.style.display = 'none';
          input.value = '';
       }
    })
+   
    input.addEventListener("keypress", function(event) {
       if (event.key === "Enter") {
         event.preventDefault();
